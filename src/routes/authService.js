@@ -1,10 +1,13 @@
 import jwt from "jsonwebtoken";
-import { registrationSchema, loginSchema } from "../validators/userValidator.js";
+import {
+  registrationSchema,
+  loginSchema,
+} from "../validators/userValidator.js";
 import bcrypt from "bcryptjs";
 import sequelize from "../config/db.js";
 import dotenv from "dotenv";
 import express from "express";
-dotenv.config(); // Ensure environment variables are loaded
+dotenv.config();
 const secratekey = process.env.JWT_SECRET || "ergenrii3rjgj3r";
 const router = express.Router();
 
@@ -14,29 +17,27 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     // Raw query to fetch user by email
-    const [user] = await sequelize.query(
+    const users = await sequelize.query(
       "SELECT * FROM users WHERE email = :email LIMIT 1",
       {
         replacements: { email },
         type: sequelize.QueryTypes.SELECT,
       }
     );
-
-    if (!user) {
+    if (users.length === 0) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
+    const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
-console.log("PRocess env",process.env.JWT_SECRET)
+
     // Generate a JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      secratekey,
-      { expiresIn: "1h" }
-    );
+    const token = jwt.sign({ userId: user.id, email: user.email }, secratekey, {
+      expiresIn: "1h",
+    });
 
     res.json({
       message: "Login successful",
@@ -51,7 +52,6 @@ console.log("PRocess env",process.env.JWT_SECRET)
 // Register Route
 router.post("/register", async (req, res) => {
   try {
-    // Validate request body using the existing registrationSchema
     await registrationSchema.validate(req.body, { abortEarly: false });
 
     const { username, email, password, role } = req.body;
