@@ -9,9 +9,8 @@ const authMiddleware = (roles = []) => {
     try {
       const decoded = jwt.verify(token, secrate);
       req.user = decoded;
-
       const user = await User.findByPk(req.user.userId);
-
+      console.log(user);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -20,44 +19,9 @@ const authMiddleware = (roles = []) => {
           .status(403)
           .json({ error: "You are not allowed to edit or update" });
       }
-
-      // Use For a Custom Query
-      // try {
-      //   const decoded = jwt.verify(token, secrate);
-      //   req.user = decoded;
-
-      //   const [user] = await sequelize.query(
-      //     "SELECT * FROM users WHERE id = :userId",
-      //     {
-      //       replacements: { userId: req.user.userId },
-      //       type: sequelize.QueryTypes.SELECT,
-      //     }
-      //   );
-
-      //   if (!user) {
-      //     return res.status(404).json({ error: "User not found" });
-      //   }
-
-      //   // Check if the decoded user has the necessary role
-      //   if (
-      //     req.user.roles &&
-      //     req.user.roles.length &&
-      //     !req.user.roles.includes(user.role)
-      //   ) {
-      //     return res
-      //       .status(403)
-      //       .json({ error: "You are not allowed to edit or update" });
-      //   }
-
-      //   // Proceed with the next middleware or controller
-      //   next(); // Use `next()` to continue to the next route handler
-      // } catch (err) {
-      //   res.status(500).json({ error: "Server error", details: err.message });
-      // }
-
       next();
     } catch (err) {
-      console.log(err)
+      console.log(err);
       res.status(400).json({ error: "Please Login With Credentials" });
     }
   };

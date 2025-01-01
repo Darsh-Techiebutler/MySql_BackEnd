@@ -52,6 +52,7 @@ router.post("/login", async (req, res) => {
 // Register Route
 router.post("/register", async (req, res) => {
   try {
+    // Validate the request body using Joi or your validation schema
     await registrationSchema.validate(req.body, { abortEarly: false });
 
     const { username, email, password, role } = req.body;
@@ -74,20 +75,27 @@ router.post("/register", async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Raw query to insert user
-    await sequelize.query(
-      "INSERT INTO users (username, email, password, role, createdAt, updatedAt) VALUES (:username, :email, :password, :role, NOW(), NOW())",
+    // Insert user using raw SQL query
+    const result = await sequelize.query(
+      `INSERT INTO users (username, email, password, role, createdAt, updatedAt) 
+       VALUES (:username, :email, :password, :role, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       {
         replacements: { username, email, password: hashedPassword, role },
         type: sequelize.QueryTypes.INSERT,
       }
     );
 
-    res.status(201).json({
-      message: "User registered successfully",
-    });
+    // Check if the result has a valid insert ID (depending on the database setup)
+    if (result) {
+      console.log("User inserted:", result);
+      res.status(201).json({
+        message: "User registered successfully",
+      });
+    } else {
+      res.status(500).json({ error: "Failed to register user" });
+    }
   } catch (err) {
-    // console.error(err);
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
