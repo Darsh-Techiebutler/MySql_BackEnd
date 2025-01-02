@@ -7,6 +7,7 @@ import { userRoutes } from "./routes/userRoutes.js";
 import dotenv from "dotenv";
 import { blogRoutes } from "./routes/blogRoutes.js";
 import { categoriesRoutes } from "./routes/categoriesRoutes.js";
+import { supeadminlogRoutes } from "./routes/superadminBlogRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -35,6 +36,7 @@ sequelize
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/blog", blogRoutes);
+app.use("/api/blog", supeadminlogRoutes);
 app.use("/api/Categories", categoriesRoutes);
 // Start Server
 app.listen(port, () => {
