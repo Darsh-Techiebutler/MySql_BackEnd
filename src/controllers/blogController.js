@@ -13,8 +13,9 @@ export const getPostById = async (req, res) => {
       replacements: { id: req.params.id },
       type: sequelize.QueryTypes.SELECT,
     });
-    if (!post || post.length === 0)
+    if (!post || post.length === 0) {
       return res.status(404).json({ error: "Post not found" });
+    }
     res.json(post[0]);
   } catch (error) {
     console.log(error);
@@ -50,7 +51,7 @@ export const createPost = async (req, res) => {
     }
 
     // Define the upload directory and ensure it exists
-    const uploadDir = path.join(__dirname, "uploads");
+    const uploadDir = path.join(__dirname, "_Adminuploads");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -82,32 +83,52 @@ export const createPost = async (req, res) => {
   }
 };
 
-// Update post
 export const updatePost = async (req, res) => {
   try {
+    // if (!req.user || !req.user.roles) {
+    //   return res.status(401).json({ error: "Unauthorized access" });
+    // }
+
     const { title, content, category_id } = req.body;
     const postId = req.params.id;
 
-    // Check if the user is an admin
     const isAdmin = req.user.roles.includes("admin");
+    const isSuperAdmin = req.user.roles.includes("superadmin");
 
-    // Update the post details and set status to 'pending' if updated by an admin
-    const result = await sequelize.query(
-      "UPDATE posts SET title = :title, content = :content, category_id = :category_id, status = :status WHERE id = :id",
-      {
-        replacements: {
-          title,
-          content,
-          category_id,
-          status: isAdmin ? "pending" : undefined,
-          id: postId,
-        },
-        type: sequelize.QueryTypes.UPDATE,
-      }
-    );
-
-    if (result[0] === 0)
+    // Fetch post to ensure it exists
+    const post = await Post.findByPk(postId);
+    if (!post) {
       return res.status(404).json({ error: "Post not found" });
+    }
+
+    let updatedFields = {
+      title,
+      content,
+      category_id,
+      status: isAdmin ? "pending" : isSuperAdmin ? "approved" : post.status,
+    };
+
+    if (req.file) {
+      const uploadDir = path.join(__dirname, "./uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const originalFilePath = req.file.path;
+      const finalFilePath = path.join(
+        uploadDir,
+        `${Date.now()}-${req.file.originalname}`
+      );
+      fs.renameSync(originalFilePath, finalFilePath);
+
+      updatedFields.image = finalFilePath;
+
+      if (post.image && fs.existsSync(post.image)) {
+        fs.unlinkSync(post.image);
+      }
+    }
+
+    await Post.update(updatedFields, { where: { id: postId } });
 
     const message = isAdmin
       ? "Post updated and set to pending for verification"
@@ -115,8 +136,7 @@ export const updatePost = async (req, res) => {
 
     res.json({ message });
   } catch (error) {
-    console.log(error);
+    console.error("Error updating post:", error);
     res.status(500).json({ error: "Failed to update post" });
   }
 };
-

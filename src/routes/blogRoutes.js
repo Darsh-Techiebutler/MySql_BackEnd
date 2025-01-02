@@ -10,7 +10,7 @@ import {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads"); // destination folder
+    cb(null, "./_Adminuploads"); // destination folder
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + file.originalname);
@@ -32,7 +32,17 @@ const blogRoutes = express.Router();
 
 blogRoutes.get("/getall", getPostswithoutpending);
 blogRoutes.get("/:id", authMiddleware(["admin", "superadmin"]), getPostById);
-blogRoutes.put("/:id", authMiddleware(["admin", "superadmin"]), updatePost);
-blogRoutes.post("/admin/post", upload.single("image"),authMiddleware(["admin"]), createPost);
+blogRoutes.put(
+  "/:id",
+  upload.single("image"),
+  authMiddleware(["admin", "superadmin"]),
+  updatePost
+);
+blogRoutes.post(
+  "/admin/post",
+  upload.single("image"),
+  authMiddleware(["admin"]),
+  createPost
+);
 
 export { blogRoutes };

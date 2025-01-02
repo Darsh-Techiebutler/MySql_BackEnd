@@ -11,7 +11,6 @@ const __dirname = path.dirname(__filename);
 
 export const createPostSuperadmin = async (req, res) => {
   try {
-    console.log(req.body)
     // return false
     await postValidationSchema.validate(req.body, { abortEarly: false });
     const { title, content, category_id } = req.body;
@@ -27,7 +26,7 @@ export const createPostSuperadmin = async (req, res) => {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-   const originalFilePath = req.file.path;
+    const originalFilePath = req.file.path;
     const finalFilePath = path.join(
       uploadDir,
       `${Date.now()}-${req.file.originalname}`
@@ -61,15 +60,48 @@ export const createPostSuperadmin = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   try {
-    const posts = await sequelize.query(
-      "Select p.id,p.title,p.content,u.username,p.image,c.name catagories ,p.status as status,p.updatedAt,p.createdAt from posts as p inner join users as u on p.author_id = u.id inner join categories as c on  p.category_id = c.id ",
+    // Extract query parameters for pagination
+    const { page = 1, limit = 5 } = req.query;
+
+    // Calculate offset
+    const offset = (page - 1) * limit;
+
+    // Fetch total count of records for calculating total pages
+    const totalCountResult = await sequelize.query(
+      "SELECT COUNT(*) AS total FROM posts",
       {
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    res.json(posts);
+    const total = totalCountResult[0].total;
+
+    // Query with LIMIT and OFFSET for pagination
+    const posts = await sequelize.query(
+      `SELECT 
+        p.id, p.title, p.content, u.username, p.image, 
+        c.name AS categories, p.status AS status, 
+        p.updatedAt, p.createdAt 
+       FROM posts AS p 
+       INNER JOIN users AS u ON p.author_id = u.id 
+       INNER JOIN categories AS c ON p.category_id = c.id
+       ORDER BY p.id ASC
+       LIMIT :limit OFFSET :offset`,
+      {
+        replacements: { limit: parseInt(limit), offset: parseInt(offset) },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Send paginated results
+    res.json({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: parseInt(total),
+      totalPages: Math.ceil(total / limit),
+      data: posts,
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: "Failed to fetch posts" });
   }
 };
