@@ -9,6 +9,7 @@ export const getCategories = async (req, res) => {
     res.json(categories);
   } catch (error) {
     console.log(error);
+    
     res.status(500).json({ error: "Failed to fetch categories" });
   }
 };

@@ -1,43 +1,38 @@
 import express from "express";
+import multer from "multer";
 import { authMiddleware } from "../Middleware/authMiddleware.js";
 import {
   createPost,
   updatePost,
-  deletePost,
-  getPosts,
+  getPostswithoutpending,
   getPostById,
-  verifyPost,
-  getPendingPosts,
 } from "../controllers/blogController.js";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads"); // destination folder
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + file.originalname);
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"), false);
+    }
+  },
+});
 
 const blogRoutes = express.Router();
 
-/** Admin Routes **/
-
-blogRoutes.get("/", authMiddleware(["admin", "superadmin"]), getPosts);
-
+blogRoutes.get("/getall", getPostswithoutpending);
 blogRoutes.get("/:id", authMiddleware(["admin", "superadmin"]), getPostById);
-
-blogRoutes.post("/", authMiddleware(["admin"]), createPost);
-
-blogRoutes.put("/:id", authMiddleware(["admin"]), updatePost);
-
-blogRoutes.delete("/:id", authMiddleware(["admin"]), deletePost);
-
-/** Super Admin Routes **/
-
-// Get all pending posts for verification
-blogRoutes.get(
-  "/verification/pending",
-  authMiddleware(["superadmin"]),
-  getPendingPosts
-);
-
-// Verify a blog post (Approve/Reject)
-blogRoutes.post(
-  "/verification/:id",
-  authMiddleware(["superadmin"]),
-  verifyPost
-);
+blogRoutes.put("/:id", authMiddleware(["admin", "superadmin"]), updatePost);
+blogRoutes.post("/admin/post", upload.single("image"),authMiddleware(["admin"]), createPost);
 
 export { blogRoutes };

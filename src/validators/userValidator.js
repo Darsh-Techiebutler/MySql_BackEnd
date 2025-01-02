@@ -4,27 +4,29 @@ const registrationSchema = yup.object().shape({
     .string()
     .required("Username is required")
     .min(3, "Username should have at least 3 characters")
-    .max(100, "Username should not exceed 100 characters"), // Added max length for username
+    .max(100, "Username should not exceed 100 characters"),
 
   email: yup
     .string()
     .required("Email is required")
     .email("Invalid email format")
-    .max(100, "Email should not exceed 100 characters"), // Added max length for email
+    .max(100, "Email should not exceed 100 characters"),
 
   password: yup
     .string()
     .required("Password is required")
     .min(6, "Password should be at least 6 characters")
-    .max(255, "Password should not exceed 255 characters"), // Added max length for password
+    .max(255, "Password should not exceed 255 characters"),
 
   role: yup
     .string()
     .oneOf(["admin", "superadmin", "user"], "Invalid role")
-    .default("user") // Default role is "user"
-    .optional(), // Role is optional if it's not explicitly passed in the request
+    .default("user")
+    .optional(),
 });
 
+// Wrap the schema in an array validation
+// const registrationSchema = yup.array().of(usersSchema);
 
 const loginSchema = yup.object().shape({
   email: yup

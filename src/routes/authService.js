@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    console.log(req.body);
     // Raw query to fetch user by email
     const users = await sequelize.query(
       "SELECT * FROM users WHERE email = :email LIMIT 1",
@@ -55,7 +55,7 @@ router.post("/register", async (req, res) => {
     // Validate the request body using Joi or your validation schema
     await registrationSchema.validate(req.body, { abortEarly: false });
 
-    const { username, email, password, role } = req.body;
+    const { username, email , password, role } = req.body;
 
     // Check if the email already exists in the database
     const existingUser = await sequelize.query(

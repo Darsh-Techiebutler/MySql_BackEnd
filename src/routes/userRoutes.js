@@ -9,7 +9,7 @@ import { resetPasswordByEmail } from "../controllers/resetPassword.js";
 
 const userRoutes = express.Router();
 
-userRoutes.get("/", authMiddleware(["admin", "superadmin", "user"]), getUsers);
+userRoutes.get("/", authMiddleware(["admin", "superadmin"]), getUsers);
 
 userRoutes.get("/:id", authMiddleware(["admin", "superadmin"]), getUserById);
 

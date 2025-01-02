@@ -1,17 +1,11 @@
 import Post from "../models/PostModel.js";
-import PostVerification from "../models/PostVerificationModel.js";
+// import PostVerification from "../models/PostVerificationModel.js";
+import sequelize from "../config/db.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 /** Admin Controllers **/
-export const getPosts = async (req, res) => {
-  try {
-    const posts = await sequelize.query("SELECT * FROM posts", {
-      type: sequelize.QueryTypes.SELECT,
-    });
-    res.json(posts);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch posts" });
-  }
-};
 
 export const getPostById = async (req, res) => {
   try {
@@ -23,25 +17,67 @@ export const getPostById = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     res.json(post[0]);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to fetch post" });
   }
 };
+export const getPostswithoutpending = async (req, res) => {
+  try {
+    const posts = await sequelize.query(
+      "Select p.id,p.title,p.content,u.username,p.image,c.name catagories ,p.status as status,p.updatedAt,p.createdAt from posts as p inner join users as u on p.author_id = u.id inner join categories as c on  p.category_id = c.id where status != 'pending' && status!= 'rejected'",
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    res.json(posts);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Failed to fetch posts" });
+  }
+};
 
-// Create a new post
+// Create post function
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 export const createPost = async (req, res) => {
   try {
     const { title, content, category_id } = req.body;
     const author_id = req.user.userId;
+    console.log(req.body);
+    // Check if an image was uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file uploaded" });
+    }
 
-    const result = await sequelize.query(
-      "INSERT INTO posts (title, content, author_id, category_id) VALUES (:title, :content, :author_id, :category_id)",
-      {
-        replacements: { title, content, author_id, category_id },
-        type: sequelize.QueryTypes.INSERT,
-      }
+    // Define the upload directory and ensure it exists
+    const uploadDir = path.join(__dirname, "uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const originalFilePath = req.file.path;
+    const finalFilePath = path.join(
+      uploadDir,
+      `${Date.now()}-${req.file.originalname}`
     );
-    res.status(201).json(result);
+    fs.renameSync(originalFilePath, finalFilePath);
+    // Create a new post record and store the image path in the database
+    const newPost = await Post.create({
+      title,
+      content,
+      author_id,
+      category_id,
+      image_data: finalFilePath,
+      status: "pending",
+    });
+
+    res.status(201).json({
+      message: "Post created and waiting for verification",
+      postId: newPost.id,
+      imagePath: finalFilePath,
+    });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to create post" });
   }
 };
@@ -52,82 +88,35 @@ export const updatePost = async (req, res) => {
     const { title, content, category_id } = req.body;
     const postId = req.params.id;
 
+    // Check if the user is an admin
+    const isAdmin = req.user.roles.includes("admin");
+
+    // Update the post details and set status to 'pending' if updated by an admin
     const result = await sequelize.query(
-      "UPDATE posts SET title = :title, content = :content, category_id = :category_id WHERE id = :id",
+      "UPDATE posts SET title = :title, content = :content, category_id = :category_id, status = :status WHERE id = :id",
       {
-        replacements: { title, content, category_id, id: postId },
+        replacements: {
+          title,
+          content,
+          category_id,
+          status: isAdmin ? "pending" : undefined,
+          id: postId,
+        },
         type: sequelize.QueryTypes.UPDATE,
       }
     );
 
     if (result[0] === 0)
       return res.status(404).json({ error: "Post not found" });
-    res.json({ message: "Post updated successfully" });
+
+    const message = isAdmin
+      ? "Post updated and set to pending for verification"
+      : "Post updated successfully";
+
+    res.json({ message });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to update post" });
   }
 };
 
-// Delete post
-export const deletePost = async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const result = await sequelize.query("DELETE FROM posts WHERE id = :id", {
-      replacements: { id: postId },
-      type: sequelize.QueryTypes.DELETE,
-    });
-
-    if (result[0] === 0)
-      return res.status(404).json({ error: "Post not found" });
-    res.json({ message: "Post deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete post" });
-  }
-};
-
-/** Super Admin Controllers **/
-
-// Get pending posts for verification
-export const getPendingPosts = async (req, res) => {
-  try {
-    const pendingPosts = await Post.findAll({ where: { status: "pending" } });
-    res.json(pendingPosts);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch pending posts" });
-  }
-};
-
-// Verify a post (approve/reject)
-export const verifyPost = async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const { status } = req.body;
-
-    if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
-    // Update the post status
-    await sequelize.query("UPDATE posts SET status = :status WHERE id = :id", {
-      replacements: { status, id: postId },
-      type: sequelize.QueryTypes.UPDATE,
-    });
-
-    // Insert a record in PostVerification table
-    await sequelize.query(
-      "INSERT INTO post_verification (post_id, verified_by, status) VALUES (:post_id, :verified_by, :status)",
-      {
-        replacements: {
-          post_id: postId,
-          verified_by: req.user.userId,
-          status,
-        },
-        type: sequelize.QueryTypes.INSERT,
-      }
-    );
-
-    res.json({ message: `Post ${status} successfully` });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to verify post" });
-  }
-};

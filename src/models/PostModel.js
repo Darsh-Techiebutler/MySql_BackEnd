@@ -10,7 +10,7 @@ const Post = sequelize.define("Post", {
     primaryKey: true,
   },
   title: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING,
     allowNull: false,
   },
   content: {
@@ -20,18 +20,14 @@ const Post = sequelize.define("Post", {
   author_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: "Users",
-      key: "id",
-    },
   },
   category_id: {
     type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  image: {
+    type: DataTypes.STRING,
     allowNull: true,
-    references: {
-      model: "Categories",
-      key: "id",
-    },
   },
   status: {
     type: DataTypes.ENUM("draft", "pending", "approved", "rejected"),
@@ -44,7 +40,6 @@ const Post = sequelize.define("Post", {
   updatedAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
-    onUpdate: DataTypes.NOW,
   },
 });
 

@@ -10,14 +10,14 @@ const authMiddleware = (roles = []) => {
       const decoded = jwt.verify(token, secrate);
       req.user = decoded;
       const user = await User.findByPk(req.user.userId);
-      console.log(user);
+      // console.log(user);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
       if (roles.length && !roles.includes(user.role)) {
         return res
           .status(403)
-          .json({ error: "You are not allowed to edit or update" });
+          .json({ error: "You are not allowed Access that operations" });
       }
       next();
     } catch (err) {
