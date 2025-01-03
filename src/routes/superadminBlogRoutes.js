@@ -7,6 +7,7 @@ import {
   verifyPost,
   getPosts,
   deletePost,
+  updatePostBybsuperadmin,
 } from "../controllers/superAdminBlogController.js";
 const supeadminlogRoutes = express.Router();
 
@@ -33,7 +34,7 @@ const upload = multer({
 });
 
 // Define routes
-supeadminlogRoutes.get("/",authMiddleware(["superadmin"]), getPosts);
+supeadminlogRoutes.get("/", authMiddleware(["superadmin"]), getPosts);
 supeadminlogRoutes.post(
   "/superadmin/post",
   authMiddleware(["superadmin"]),
@@ -50,6 +51,12 @@ supeadminlogRoutes.post(
   "/verification/:id",
   authMiddleware(["superadmin"]),
   verifyPost
+);
+supeadminlogRoutes.put(
+  "/superadmin/:id",
+  upload.single("image"),
+  authMiddleware(["superadmin"]),
+  updatePostBybsuperadmin
 );
 supeadminlogRoutes.delete(
   "/superadmin/delete",

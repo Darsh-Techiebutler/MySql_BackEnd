@@ -110,7 +110,12 @@ export const getPosts = async (req, res) => {
 export const getPendingPosts = async (req, res) => {
   try {
     const pendingPosts = await sequelize.query(
-      "Select p.id,p.title,p.content,u.username,c.name catagories ,p.status as status,p.updatedAt,p.createdAt from posts as p inner join users as u on p.author_id = u.id inner join categories as c on  p.category_id = c.id where status = 'pending'",
+      `Select 
+      p.id,p.title,p.content,u.username,c.name catagories ,p.image,
+      p.status as status,p.updatedAt,p.createdAt 
+      from posts as p 
+      inner join users as u on p.author_id = u.id 
+      inner join categories as c on  p.category_id = c.id where status = 'pending'`,
       {
         type: sequelize.QueryTypes.SELECT,
       }
@@ -198,5 +203,53 @@ export const deletePost = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to delete post" });
+  }
+};
+export const updatePostBybsuperadmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const { title, content, category_id } = req.body;
+    // const author_id = req.user.userId;
+
+    // Check if the post exists in the database
+    const post = await Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    let updatedFields = {
+      title,
+      content,
+      category_id,
+      status: "approved",
+    };
+    if (req.file) {
+      const uploadDir = path.join(__dirname, "./uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const originalFilePath = req.file.path;
+      const finalFilePath = path.join(
+        uploadDir,
+        `${Date.now()}-${req.file.originalname}`
+      );
+      fs.renameSync(originalFilePath, finalFilePath);
+
+      updatedFields.image = finalFilePath;
+
+      if (post.image && fs.existsSync(post.image)) {
+        fs.unlinkSync(post.image);
+      }
+    }
+
+    await Post.update(updatedFields, { where: { id: postId } });
+
+    res.status(200).json({
+      message: "Post updated and SuccessFully",
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Failed to update post" });
   }
 };

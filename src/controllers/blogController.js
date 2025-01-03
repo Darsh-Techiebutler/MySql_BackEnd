@@ -22,10 +22,17 @@ export const getPostById = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch post" });
   }
 };
+
 export const getPostswithoutpending = async (req, res) => {
   try {
     const posts = await sequelize.query(
-      "Select p.id,p.title,p.content,u.username,p.image,c.name catagories ,p.status as status,p.updatedAt,p.createdAt from posts as p inner join users as u on p.author_id = u.id inner join categories as c on  p.category_id = c.id where status != 'pending' && status!= 'rejected'",
+      `Select 
+      p.id,p.title,p.content,u.username,p.image,c.name ascatagories ,
+      p.status as status,p.updatedAt,p.createdAt 
+      from posts as p 
+      inner join users as u on p.author_id = u.id 
+      inner join categories as c on  p.category_id = c.id 
+      where status != 'pending' && status!= 'rejected'`,
       {
         type: sequelize.QueryTypes.SELECT,
       }
@@ -45,12 +52,13 @@ export const createPost = async (req, res) => {
     const { title, content, category_id } = req.body;
     const author_id = req.user.userId;
     console.log(req.body);
+
     // Check if an image was uploaded
     if (!req.file) {
       return res.status(400).json({ error: "No image file uploaded" });
     }
 
-    // Define the upload directory and ensure it exists
+    // Define a common upload directory
     const uploadDir = path.join(__dirname, "_Adminuploads");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -62,6 +70,7 @@ export const createPost = async (req, res) => {
       `${Date.now()}-${req.file.originalname}`
     );
     fs.renameSync(originalFilePath, finalFilePath);
+
     // Create a new post record and store the image path in the database
     const newPost = await Post.create({
       title,
@@ -85,16 +94,11 @@ export const createPost = async (req, res) => {
 
 export const updatePost = async (req, res) => {
   try {
-    // if (!req.user || !req.user.roles) {
-    //   return res.status(401).json({ error: "Unauthorized access" });
-    // }
-
     const { title, content, category_id } = req.body;
     const postId = req.params.id;
 
-    const isAdmin = req.user.roles.includes("admin");
-    const isSuperAdmin = req.user.roles.includes("superadmin");
-
+    // Ensure only admins can update posts
+  
     // Fetch post to ensure it exists
     const post = await Post.findByPk(postId);
     if (!post) {
@@ -105,7 +109,7 @@ export const updatePost = async (req, res) => {
       title,
       content,
       category_id,
-      status: isAdmin ? "pending" : isSuperAdmin ? "approved" : post.status,
+      status: "pending", // Only admins can update, so set status to "pending"
     };
 
     if (req.file) {
@@ -130,11 +134,9 @@ export const updatePost = async (req, res) => {
 
     await Post.update(updatedFields, { where: { id: postId } });
 
-    const message = isAdmin
-      ? "Post updated and set to pending for verification"
-      : "Post updated successfully";
-
-    res.json({ message });
+    res.json({
+      message: "Post updated and set to pending for verification",
+    });
   } catch (error) {
     console.error("Error updating post:", error);
     res.status(500).json({ error: "Failed to update post" });

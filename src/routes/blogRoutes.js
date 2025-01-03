@@ -10,10 +10,10 @@ import {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./_Adminuploads"); // destination folder
+    cb(null, "./_Adminuploads"); // Updated to use a single directory
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + file.originalname);
+    cb(null, Date.now() + "-" + file.originalname); // Added a separator for better readability
   },
 });
 
@@ -35,7 +35,7 @@ blogRoutes.get("/:id", authMiddleware(["admin", "superadmin"]), getPostById);
 blogRoutes.put(
   "/:id",
   upload.single("image"),
-  authMiddleware(["admin", "superadmin"]),
+  authMiddleware(["admin"]),
   updatePost
 );
 blogRoutes.post(
