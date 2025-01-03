@@ -28,7 +28,7 @@ To install the project dependencies, follow the steps below:
 2. Install Dependencies:
    ```bash
    `npm install`
-  
+
 3.Run The Project :
    ```bash
   `npm run dev`
