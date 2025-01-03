@@ -23,7 +23,7 @@ To install the project dependencies, follow the steps below:
 
 1. Clone the repository:
    ```bash
-   `https://github.com/Darsh-Techiebutler/MySql_BackEnd.git`
+   https://github.com/Darsh-Techiebutler/MySql_BackEnd.git
 
 2. Install Dependencies:
    ```bash
@@ -31,4 +31,4 @@ To install the project dependencies, follow the steps below:
 
 3.Run The Project :
    ```bash
-  `npm run dev`
+  npm run dev
