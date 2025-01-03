@@ -25,7 +25,7 @@ To install the project dependencies, follow the steps below:
    ```bash
    `https://github.com/Darsh-Techiebutler/MySql_BackEnd.git`
 
-3. Install Dependencies:
+2. Install Dependencies:
    ```bash
    `npm install`
   
