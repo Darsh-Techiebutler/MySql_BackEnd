@@ -22,8 +22,7 @@ The project relies on the following dependencies:
 To install the project dependencies, follow the steps below:
 
 1. Clone the repository:
-   ```bash
-  `https://github.com/Darsh-Techiebutler/MySql_BackEnd.git`
+   ```bash `https://github.com/Darsh-Techiebutler/MySql_BackEnd.git`
 
 2. Install Dependencies:
    ```bash
