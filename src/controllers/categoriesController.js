@@ -1,5 +1,5 @@
 import Category from "../models/CategoryModel.js";
-import { categorySchema } from "../validators/catagoriesValidator.js"; // Import the schema
+import { categorySchema } from "../validators/catagoriesValidator.js"; 
 import { ValidationError } from "yup";
 
 // Get all categories

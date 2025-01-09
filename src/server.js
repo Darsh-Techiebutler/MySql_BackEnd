@@ -8,10 +8,13 @@ import dotenv from "dotenv";
 import { blogRoutes } from "./routes/blogRoutes.js";
 import { categoriesRoutes } from "./routes/categoriesRoutes.js";
 import { supeadminlogRoutes } from "./routes/superadminBlogRoutes.js";
+import cors from "cors";
 dotenv.config();
+
 
 const app = express();
 const port = process.env.PORT || 1717;
+app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
