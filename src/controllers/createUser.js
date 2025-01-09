@@ -1,7 +1,10 @@
 import sequelize from "../config/db.js";
+import bcrypt from "bcrypt";
 // Create a new user
 const createUser = async (req, res) => {
   // Check if the email already exists in the database
+  const email = req.body.email;
+
   const existingUser = await sequelize.query(
     "SELECT * FROM users WHERE email = :email",
     {
@@ -12,7 +15,7 @@ const createUser = async (req, res) => {
 
   if (existingUser.length > 0) {
     return res
-      .status(400)
+      .status(409)
       .json({ error: "User already registered with this email" });
   }
   try {
@@ -28,6 +31,7 @@ const createUser = async (req, res) => {
 
     res.status(201).json({ message: "User created" });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Server error" });
   }
 };

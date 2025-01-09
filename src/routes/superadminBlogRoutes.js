@@ -38,7 +38,7 @@ supeadminlogRoutes.get("/", authMiddleware(["superadmin"]), getPosts);
 supeadminlogRoutes.post(
   "/superadmin/post",
   authMiddleware(["superadmin"]),
-  upload.single("image"), // Middleware to handle single file upload
+  upload.single("image"),
   createPostSuperadmin
 );
 
